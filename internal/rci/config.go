@@ -3,9 +3,9 @@ package rci
 import "errors"
 
 type Config struct {
-	Host        string `long:"host" env:"HOST" default:"192.168.1.1" description:"RCI host"`
-	CookieName  string `long:"cookie-name" env:"COOKIE_NAME" description:"RCI cookie name"`
-	CookieValue string `long:"cookie-value" env:"COOKIE_VALUE" description:"RCI cookie value"`
+	Host     string `long:"host" env:"HOST" default:"192.168.1.1" description:"RCI host"`
+	Login    string `long:"login" env:"LOGIN" description:"router user login"`
+	Password string `long:"password" env:"PASSWORD" description:"router user password"`
 }
 
 func (c Config) MustInitRCI() *Client {
@@ -17,10 +17,9 @@ func (c Config) MustInitRCI() *Client {
 }
 
 func (c Config) InitRCI() (*Client, error) {
-	if c.CookieName == "" || c.CookieValue == "" {
-		return nil, errors.New("rci cookie name and value are required")
+	if c.Login == "" || c.Password == "" {
+		return nil, errors.New("rci login and password are required")
 	}
 
-	client := New("http://"+c.Host+"/rci", c.CookieName, c.CookieValue)
-	return client, nil
+	return New("http://"+c.Host, c.Login, c.Password)
 }

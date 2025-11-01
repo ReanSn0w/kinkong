@@ -1,6 +1,8 @@
 package utils_test
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"testing"
 
 	"github.com/ReanSn0w/kincong/internal/utils"
@@ -117,6 +119,27 @@ func Test_Value(t *testing.T) {
 			assert.Equal(t, tc.IsNetwork, value.IsNetwork(), "network check")
 			assert.Equal(t, tc.IsDomain, value.IsDomain(), "domain check")
 			assert.Equal(t, tc.IsASN, value.IsASN(), "asn check")
+		})
+	}
+}
+
+func Test_Hash(t *testing.T) {
+	cases := []struct {
+		Name   string
+		Input  string
+		Output string
+	}{
+		{
+			Name:   "Hash Example",
+			Input:  "mekmyc-pudho5-duwnoW",
+			Output: "f6511d86fa0a32fa97f5af162567dec3d7133b035a8dde885698e4b4cb551b8e",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.Name, func(t *testing.T) {
+			hash := fmt.Sprintf("%x", sha256.Sum256([]byte(tc.Input)))
+			assert.Equal(t, tc.Output, hash, "hash check")
 		})
 	}
 }

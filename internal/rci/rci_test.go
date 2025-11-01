@@ -16,12 +16,16 @@ var (
 )
 
 func init() {
-	_, err := app.LoadConfiguration("RCI", "test", &opts, "../../run.env")
+	log, err := app.LoadConfiguration("RCI", "test", &opts, "../../run.env")
 	if err != nil {
 		panic(err)
 	}
 
-	rciClient, _ = opts.RCI.InitRCI()
+	rciClient, err = opts.RCI.InitRCI()
+	if err != nil {
+		log.Logf("[INFO] rci client init failed: %s", err)
+		rciClient = nil
+	}
 }
 
 func TestClient_GetInterfaces(t *testing.T) {

@@ -42,8 +42,8 @@ RCI Actions:
 
 RCI Params:
       --rci.host=            RCI host (default: 192.168.1.1) [$RCI_HOST]
-      --rci.cookie-name=     RCI cookie name [$RCI_COOKIE_NAME]
-      --rci.cookie-value=    RCI cookie value [$RCI_COOKIE_VALUE]
+      --rci.login=           router user login [$RCI_LOGIN]
+      --rci.password=        router user password [$RCI_PASSWORD]
 ```
 
 ## Пример файла конфигурации

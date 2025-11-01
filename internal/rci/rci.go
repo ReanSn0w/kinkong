@@ -13,22 +13,119 @@ import (
 	"time"
 )
 
-func New(baseURL, cName, cValue string) *Client {
-	return &Client{
+func New(baseURL, login, password string) (*Client, error) {
+	client := &Client{
 		baseURL: baseURL,
-		cName:   cName,
-		cValue:  cValue,
 		cl: &http.Client{
 			Timeout: time.Second * 3,
 		},
 	}
+
+	err := client.authorize(login, password)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }
 
 type Client struct {
 	cl      *http.Client
 	baseURL string
-	cName   string
-	cValue  string
+	cookie  *http.Cookie
+}
+
+func (c *Client) authorize(login, password string) error {
+	ndmChallenge := ""
+	ndmRealm := ""
+
+	// Этап 1: Получаем Cookie
+	{
+		request, err := http.NewRequest(http.MethodGet, c.baseURL+"/auth", nil)
+		if err != nil {
+			return err
+		}
+
+		resp, err := c.cl.Do(request)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		ndmChallenge = resp.Header.Get("X-NDM-Challenge")
+		ndmRealm = resp.Header.Get("X-NDM-Realm")
+
+		cookies := resp.Cookies()
+
+		if len(cookies) == 0 {
+			return fmt.Errorf("no cookies found")
+		}
+
+		for _, cookie := range cookies {
+			if cookie.SameSite != http.SameSiteStrictMode {
+				continue
+			}
+			if cookie.MaxAge != 300 {
+				continue
+			}
+			if cookie.Path != "/" {
+				continue
+			}
+
+			c.cookie = cookie
+		}
+	}
+
+	// Этап 2: Авторизуемся
+	{
+		loginForm := map[string]string{
+			"login":    login,
+			"password": GetEncryptedPassword(ndmChallenge, ndmRealm, login, password),
+		}
+
+		jsonData, err := json.Marshal(loginForm)
+		if err != nil {
+			return err
+		}
+
+		request, err := http.NewRequest(http.MethodPost, c.baseURL+"/auth", bytes.NewReader(jsonData))
+		if err != nil {
+			return err
+		}
+
+		request.Header.Set("Content-Type", "application/json")
+		request.AddCookie(c.cookie)
+
+		resp, err := c.cl.Do(request)
+		if err != nil {
+			return err
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("failed to authorize: %s", resp.Status)
+		}
+	}
+
+	// Этап 3: Проверяем, что успешно залогинились
+	{
+		request, err := http.NewRequest(http.MethodGet, c.baseURL+"/auth", nil)
+		if err != nil {
+			return err
+		}
+
+		request.AddCookie(c.cookie)
+
+		resp, err := c.cl.Do(request)
+		if err != nil {
+			return err
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("failed to authorize: %s", resp.Status)
+		}
+	}
+
+	return nil
 }
 
 type InterfaceResponse map[string]InterfaceItem
@@ -137,7 +234,7 @@ func (c *Client) DeleteIPRoute(item RouteItem) error {
 }
 
 func (c *Client) request(method string, path string, params map[string]interface{}) (*http.Response, error) {
-	requestURL := c.baseURL + path
+	requestURL := c.baseURL + "/rci" + path
 	var body io.Reader
 	switch method {
 	case http.MethodGet, http.MethodDelete:
@@ -162,10 +259,7 @@ func (c *Client) request(method string, path string, params map[string]interface
 		return nil, err
 	}
 
-	request.AddCookie(&http.Cookie{
-		Name:  c.cName,
-		Value: c.cValue,
-	})
+	request.AddCookie(c.cookie)
 
 	resp, err := c.cl.Do(request)
 	if err != nil {
