@@ -1,0 +1,5 @@
+- title: Test Configuration
+  values:
+    - 192.168.0.1
+    - http://mysite.org
+    - AS13335
