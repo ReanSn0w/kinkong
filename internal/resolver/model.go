@@ -3,7 +3,8 @@ package resolver
 import "github.com/ReanSn0w/kincong/internal/utils"
 
 const (
-	ResolverTypeIP ResolverType = iota
+	resolverTypeEmpty ResolverType = iota
+	ResolverTypeIP
 	ResolverTypeDNS
 	ResolverTypeASN
 )

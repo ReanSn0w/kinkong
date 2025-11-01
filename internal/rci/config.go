@@ -3,7 +3,7 @@ package rci
 import "errors"
 
 type Config struct {
-	Host        string `long:"host" env:"HOST" default:"http://192.168.1.1" description:"RCI host"`
+	Host        string `long:"host" env:"HOST" default:"192.168.1.1" description:"RCI host"`
 	CookieName  string `long:"cookie-name" env:"COOKIE_NAME" description:"RCI cookie name"`
 	CookieValue string `long:"cookie-value" env:"COOKIE_VALUE" description:"RCI cookie value"`
 }

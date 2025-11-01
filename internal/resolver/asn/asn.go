@@ -1,26 +1,80 @@
 package asn
 
 import (
-	"errors"
+	"encoding/json"
+	"fmt"
+	"net/http"
 
 	"github.com/ReanSn0w/kincong/internal/resolver"
 	"github.com/ReanSn0w/kincong/internal/utils"
 )
 
-type Resolver struct {
-	key string
-}
+type (
+	Resolver struct{}
 
-func New(key string) *Resolver {
-	return &Resolver{
-		key: key,
+	resolveResponse struct {
+		Version        string `json:"version"`
+		DataCallName   string `json:"data_call_name"`
+		DataCallStatus string `json:"data_call_status"`
+		Cached         bool   `json:"cached"`
+		Data           data   `json:"data"`
+		QueryID        string `json:"query_id"`
+		ProcessTime    int64  `json:"process_time"`
+		ServerID       string `json:"server_id"`
+		BuildVersion   string `json:"build_version"`
+		Status         string `json:"status"`
+		StatusCode     int64  `json:"status_code"`
+		Time           string `json:"time"`
 	}
+
+	data struct {
+		Prefixes []prefix `json:"prefixes"`
+	}
+
+	prefix struct {
+		InBGP   bool   `json:"in_bgp"`
+		InWhois bool   `json:"in_whois"`
+		Prefix  string `json:"prefix"`
+	}
+)
+
+func New() *Resolver {
+	return &Resolver{}
 }
 
 func (r *Resolver) Type() resolver.ResolverType {
 	return resolver.ResolverTypeASN
 }
 
-func (r *Resolver) Resolve(ip string) ([]utils.ResolvedSubnet, error) {
-	return nil, errors.New("not implemented")
+func (r *Resolver) Resolve(value string) ([]utils.ResolvedSubnet, error) {
+	resp, err := http.Get(fmt.Sprintf("https://stat.ripe.net/data/as-routing-consistency/data.json?resource=%s", value))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	var responseResult resolveResponse
+	err = json.NewDecoder(resp.Body).Decode(&responseResult)
+	if err != nil {
+		return nil, err
+	}
+
+	var result = make([]utils.ResolvedSubnet, 0, len(responseResult.Data.Prefixes))
+	for _, prefix := range responseResult.Data.Prefixes {
+		if !prefix.InBGP {
+			continue
+		}
+
+		if !prefix.InWhois {
+			continue
+		}
+
+		result = append(result, utils.ResolvedSubnet(prefix.Prefix))
+	}
+
+	return result, nil
 }

@@ -23,8 +23,10 @@ kincong --action.upload -f <config_file>
 
 ```bash
 Application Options:
+      --debug                enable debug mode [$DEBUG]
   -i, --interface=           select interface
   -f, --file=                select file
+      --dns=                 use for custom dns resolver
 
 Main Actions:
       --action.upload        upload file params to rci (default action)
@@ -39,17 +41,9 @@ RCI Actions:
       --action.rci.clear     clear all static routes
 
 RCI Params:
-      --rci.host=            RCI host (default: http://192.168.1.1) [$RCI_HOST]
+      --rci.host=            RCI host (default: 192.168.1.1) [$RCI_HOST]
       --rci.cookie-name=     RCI cookie name [$RCI_COOKIE_NAME]
       --rci.cookie-value=    RCI cookie value [$RCI_COOKIE_VALUE]
-
-ASN Resolver Params:
-      --asn.enabled          enable ASN resolver [$ASN_ENABLED]
-      --asn.key=             BGPview API key [$ASN_KEY]
-
-DNS Resolver Params:
-      --dns.enabled          enable DNS resolver [$DNS_ENABLED]
-      --dns.host=            DNS host (default: 8.8.8.8) [$DNS_HOST]
 ```
 
 ## Пример файла конфигурации

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/ReanSn0w/gokit/pkg/app"
 	"github.com/ReanSn0w/kincong/internal/configuration"
@@ -48,10 +47,9 @@ var (
 
 		Interface string `short:"i" long:"interface" description:"select interface"`
 		File      string `short:"f" long:"file" description:"select file"`
+		DNS       string `long:"dns" description:"use for custom dns resolver"`
 
 		RCI rci.Config `group:"RCI Params" namespace:"rci" env-namespace:"RCI"`
-		ASN asn.Config `group:"ASN Resolver Params" namespace:"asn" env-namespace:"ASN"`
-		DNS dns.Config `group:"DNS Resolver Params" namespace:"dns" env-namespace:"DNS"`
 	}{}
 )
 
@@ -178,7 +176,7 @@ func filePreviewFn() error {
 	}
 
 	for index, value := range conf {
-		fmt.Printf("Connection %d: %s\n", index+1, value.Title)
+		fmt.Printf("Group %d: %s\n", index+1, value.Title)
 		subnets := make(map[string]utils.ResolvedSubnet)
 
 		for _, value := range value.Values {
@@ -310,16 +308,15 @@ func selectAction() Action {
 func initResolver() (*resolver.Resolver, error) {
 	resolvers := []resolver.ResolverItem{
 		ip.New(),
+		asn.New(),
 	}
 
-	if opts.DNS.Enabled {
-		resolvers = append(resolvers, dns.New(opts.DNS.Host...))
-		application.Log().Logf("[INFO] DNS resolver enabled by %s", strings.Join(opts.DNS.Host, ", "))
-	}
-
-	if opts.ASN.Enabled {
-		resolvers = append(resolvers, asn.New(opts.ASN.Key))
-		application.Log().Logf("[INFO] ASN resolver enabled")
+	if opts.DNS != "" {
+		resolvers = append(resolvers, dns.New(opts.DNS))
+		application.Log().Logf("[DEBUG] application uses custom dns server: %s", opts.DNS)
+	} else {
+		resolvers = append(resolvers, dns.New(opts.RCI.Host))
+		application.Log().Logf("[DEBUG] application uses keenetic for dns resolution")
 	}
 
 	return resolver.NewResolver(resolvers...), nil

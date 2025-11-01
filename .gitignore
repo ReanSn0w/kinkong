@@ -24,3 +24,6 @@ go.work
 cmd/app/config.yaml
 .zed
 .DS_Store
+config.yaml
+run.env
+*.env

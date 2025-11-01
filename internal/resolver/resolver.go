@@ -44,6 +44,10 @@ func (r *Resolver) Resolve(items ...utils.Value) (map[string]utils.ResolvedSubne
 
 func (r *Resolver) resolveItem(item utils.Value) ([]utils.ResolvedSubnet, error) {
 	t := r.detectValueType(item)
+	if t == resolverTypeEmpty {
+		return nil, nil
+	}
+
 	resolver, ok := r.resolvers[t]
 	if !ok {
 		return nil, ErrResolverNotFound
@@ -55,8 +59,14 @@ func (r *Resolver) detectValueType(item utils.Value) ResolverType {
 	if item.IsASN() {
 		return ResolverTypeASN
 	}
-	if item.IsSite() {
+	if item.IsDomain() {
 		return ResolverTypeDNS
 	}
-	return ResolverTypeIP
+	if item.IsNetwork() {
+		return ResolverTypeIP
+	}
+	if item.IsIP() {
+		return ResolverTypeIP
+	}
+	return resolverTypeEmpty
 }
