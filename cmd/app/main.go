@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/ReanSn0w/gokit/pkg/app"
 	"github.com/ReanSn0w/kincong/internal/configuration"
@@ -129,7 +130,14 @@ func uploadFn() error {
 
 	application.Log().Logf("[INFO] сформирован список из %d подсетей", len(subnets))
 
+	count := len(subnets)
+	uploaded := 0
+
 	for _, subnet := range subnets {
+		uploaded++
+		fmt.Printf(" Загзузка подсетей %d из %d", uploaded, count)
+		time.Sleep(10 * time.Millisecond)
+
 		ip, mask, err := utils.SubnetToIPAndMask(string(subnet))
 		if err != nil {
 			application.Log().Logf("[ERROR] upload subnet err: %s", err)
@@ -247,7 +255,7 @@ func rciInspectFn() error {
 		return err
 	}
 
-	fmt.Printf("rci %s routes list:\n", opts.RCI.Host)
+	fmt.Printf("rci %s routes list (%d):\n", opts.RCI.Host, len(resp))
 
 	for _, route := range resp {
 		fmt.Printf(
